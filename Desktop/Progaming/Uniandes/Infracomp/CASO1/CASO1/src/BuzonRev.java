@@ -1,33 +1,44 @@
-public class BuzonRev {
-    private final String[] buzones;
-    private int cont = 0;
+import java.util.LinkedList;
+import java.util.Queue;
+
+class BuzonRev {
+    private final Queue<String> buzones;
+    private final int capacidad;
 
     public BuzonRev(int capacidad) {
-        this.buzones = new String[capacidad];
+        this.capacidad = capacidad;
+        this.buzones = new LinkedList<>();
     }
-
-    public synchronized void guardar(String buzon) throws InterruptedException {
-
-        while (cont >= buzones.length) {
+    
+    public synchronized void guardar(String mensaje) throws InterruptedException {
+        while(buzones.size() >= capacidad) {
             wait();
         }
-        buzones[cont++] = buzon;
+        buzones.add(mensaje);
         notifyAll();
-
     }
-
+    
     public synchronized String quitar() throws InterruptedException {
-        while (cont == 0) {
+        while(buzones.isEmpty()) {
             wait();
         }
-        String buzon = buzones[--cont];
+        String mensaje = buzones.poll();
         notifyAll();
-        return buzon;
-
+        return mensaje;
     }
-
-    public boolean vacio() {
-        return cont == 0;
+    
+    // Método de extracción no bloqueante para polling semi-activo.
+    public synchronized String quitarNoBloqueante() {
+        if(buzones.isEmpty()){
+            return null;
+        }
+        String mensaje = buzones.poll();
+        notifyAll();
+        return mensaje;
+    }
+    
+    public synchronized boolean vacio() {
+        return buzones.isEmpty();
     }
 
 }

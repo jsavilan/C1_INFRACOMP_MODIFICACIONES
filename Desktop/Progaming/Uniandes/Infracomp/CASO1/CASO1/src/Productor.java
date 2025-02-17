@@ -1,27 +1,27 @@
-public class Productor extends Thread {
-    // private String produ;
+class Productor extends Thread {
     private final BuzonRev buzonRevision;
     private final BuzonRev buzonReproceso;
     private static int cont = 0;
     private final int maxProdu;
-    // private boolean finali = false;
-    // private String produ;
+    private int id;
 
-    public Productor(BuzonRev buzonRev, BuzonRev buzonReproceso, int maxProdu) {
+    public Productor(BuzonRev buzonRev, BuzonRev buzonReproceso, int maxProdu,int id) {
         this.maxProdu = maxProdu;
         this.buzonRevision = buzonRev;
         this.buzonReproceso = buzonReproceso;
+        this.id = id;
     }
 
     @Override
     public void run() {
-        try {
-            while (true) {
+        boolean terminado = false;
+        while (!terminado) {
+            try {
                 String produ = null;
                 if (!buzonReproceso.vacio()) {
                     produ = buzonReproceso.quitar();
                     if ("FIN".equals(produ)) {
-                        break;
+                        terminado = true;
                     }
                 } else {
                     synchronized (Productor.class) {
@@ -29,49 +29,21 @@ public class Productor extends Thread {
                             cont++;
                             produ = "producto #" + cont;
                         } else {
-                            break;
+                            terminado = true;
                         }
                     }
                 }
-
-                /*
-                 * String produ = buzonReproceso.quitar();
-                 * if (produ.equals("FIN")) {
-                 * finali = true;
-                 * break;
-                 * }
-                 * try {
-                 * buzonRevision.guardar(produ);
-                 * } catch (InterruptedException e) {
-                 * e.printStackTrace();
-                 * }
-                 * System.out.println("mbappe");
-                 * 
-                 * 
-                 * if (cont > 0) {
-                 * 
-                 * produ = buzonReproceso.quitar();
-                 * 
-                 * } else {
-                 * cont++;
-                 * produ = "Producto #" + cont;
-                 * }
-                 * if (produ.equals("FIN")) {
-                 * finali = true;
-                 * break;
-                 * }
-                 */
-                buzonRevision.guardar(produ);
-
-                System.out.println("Hicieron: " + produ);
-
+                if (!terminado && produ != null) {
+                    buzonRevision.guardar(produ);
+                    System.out.println("Productor "+id + " genera: " + produ);
+                }
                 Thread.sleep(500);
-
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                terminado = true;
             }
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
-
+        System.out.println("Productor "+ id + " termina su ejecución.");
     }
+
 }
